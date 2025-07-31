@@ -19,7 +19,7 @@ const Navbar = () => {
         </div>
 
         {/* Admin Button */}
-        <Link href="/admin">
+        <Link href="/dashboard">
           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 text-sm sm:text-base">
             Admin
           </button>
