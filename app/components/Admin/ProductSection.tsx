@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 import { Product } from '@/app/types/Product'
 
 const ProductSection = () => {
@@ -15,7 +17,7 @@ const ProductSection = () => {
     category: 'featured',
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -23,9 +25,16 @@ const ProductSection = () => {
   }, [])
 
   const fetchProducts = async () => {
-    const res = await fetch('/api/products')
-    const data = await res.json()
-    setProducts(data)
+    try {
+      setLoading(true)
+      const res = await fetch('/api/products')
+      const data = await res.json()
+      setProducts(data)
+    } catch (err) {
+      toast.error('Failed to fetch products')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleImageUpload = (file: File) => {
@@ -43,17 +52,9 @@ const ProductSection = () => {
 
     try {
       let imageData = form.image
+      if (imageFile) imageData = await handleImageUpload(imageFile)
 
-      if (imageFile) {
-        imageData = await handleImageUpload(imageFile)
-      }
-
-      const payload = {
-        ...form,
-        image: imageData,
-        category: form.category || 'featured',
-      }
-
+      const payload = { ...form, image: imageData }
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `/api/products/${editingId}` : '/api/products'
 
@@ -73,7 +74,6 @@ const ProductSection = () => {
         toast.error('Failed to save product')
       }
     } catch (err) {
-      console.error(err)
       toast.error('Something went wrong')
     } finally {
       setLoading(false)
@@ -82,10 +82,7 @@ const ProductSection = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this product?')) return
-
-    const res = await fetch(`/api/products/${id}`, {
-      method: 'DELETE',
-    })
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
 
     if (res.ok) {
       toast.success('Product deleted')
@@ -154,9 +151,7 @@ const ProductSection = () => {
 
         <select
           value={form.category}
-          onChange={(e) =>
-            setForm({ ...form, category: e.target.value as Product['category'] })
-          }
+          onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'] })}
           className="border p-2 rounded"
         >
           <option value="featured">Featured</option>
@@ -179,26 +174,14 @@ const ProductSection = () => {
             disabled={loading}
             className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
           >
-            {loading
-              ? editingId
-                ? 'Updating...'
-                : 'Adding...'
-              : editingId
-              ? 'Update Product'
-              : 'Add Product'}
+            {loading ? (editingId ? 'Updating...' : 'Adding...') : editingId ? 'Update Product' : 'Add Product'}
           </button>
 
           {editingId && (
             <button
               type="button"
               onClick={() => {
-                setForm({
-                  name: '',
-                  price: 0,
-                  image: '',
-                  sale: false,
-                  category: 'featured',
-                })
+                setForm({ name: '', price: 0, image: '', sale: false, category: 'featured' })
                 setImageFile(null)
                 setEditingId(null)
               }}
@@ -212,47 +195,58 @@ const ProductSection = () => {
 
       {/* Product List */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <div
-            key={product._id}
-            className="bg-white p-3 rounded shadow flex flex-col items-center"
-          >
-            <div className="w-full aspect-[3/4] relative mb-2 rounded overflow-hidden">
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                className="object-cover rounded"
-              />
-            </div>
-            <p className="font-semibold">{product.name}</p>
-            <p className="text-sm text-gray-600">Ksh.{product.price}</p>
-            <p className="text-xs text-gray-400 capitalize">
-              {product.category}
-            </p>
+        {loading && products.length === 0
+          ? Array(6)
+              .fill(0)
+              .map((_, idx) => (
+                <div key={idx} className="p-4 bg-white rounded shadow">
+                  <Skeleton height={200} />
+                  <Skeleton height={20} style={{ marginTop: '10px' }} />
+                  <Skeleton height={15} width={80} />
+                  <Skeleton height={15} width={60} />
+                  <Skeleton height={20} width={100} />
+                </div>
+              ))
+          : products.map((product) => (
+              <div
+                key={product._id}
+                className="bg-white p-3 rounded shadow flex flex-col items-center"
+              >
+                <div className="w-full aspect-[3/4] relative mb-2 rounded overflow-hidden">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover rounded"
+                  />
+                </div>
+                <p className="font-semibold">{product.name}</p>
+                <p className="text-sm text-gray-600">Ksh.{product.price}</p>
+                <p className="text-xs text-gray-400 capitalize">{product.category}</p>
 
-            <div className="flex gap-4 mt-3">
-              <button
-                onClick={() => handleEdit(product)}
-                className="text-sm text-green-600 hover:underline"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(product._id!)}
-                className="text-sm text-red-500 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+                <div className="flex gap-4 mt-3">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="text-sm text-green-600 hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product._id!)}
+                    className="text-sm text-red-500 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
       </div>
     </div>
   )
 }
 
 export default ProductSection
+
 
 
 

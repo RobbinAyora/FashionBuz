@@ -31,6 +31,20 @@ interface Payment {
   status: string
 }
 
+const StatSkeleton = () => (
+  <div className="animate-pulse bg-white rounded-xl shadow p-4 w-full sm:w-1/2 md:w-1/3 flex-1">
+    <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+    <div className="h-8 bg-gray-300 rounded w-1/2" />
+  </div>
+)
+
+const ChartSkeleton = () => (
+  <div className="animate-pulse bg-white rounded-xl shadow p-4 w-full h-72">
+    <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
+    <div className="h-56 bg-gray-100 rounded" />
+  </div>
+)
+
 const StatCard = ({ title, value }: { title: string; value: number }) => (
   <div className="bg-white rounded-xl shadow p-4 w-full sm:w-1/2 md:w-1/3 flex-1">
     <h3 className="text-base sm:text-lg font-semibold text-gray-700">{title}</h3>
@@ -76,6 +90,7 @@ const ChartCard = ({
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'payments'>('dashboard')
   const [payments, setPayments] = useState<Payment[]>([])
+  const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
@@ -87,9 +102,15 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchPayments = async () => {
-      const res = await fetch('/api/payments')
-      const data = await res.json()
-      setPayments(data)
+      try {
+        const res = await fetch('/api/payments')
+        const data = await res.json()
+        setPayments(data)
+      } catch (e) {
+        console.error('Error fetching payments:', e)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchPayments()
   }, [])
@@ -109,8 +130,6 @@ const AdminDashboard = () => {
     }
     if (sidebarOpen) {
       document.addEventListener('mousedown', handleOutsideClick)
-    } else {
-      document.removeEventListener('mousedown', handleOutsideClick)
     }
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick)
@@ -143,7 +162,6 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* Transparent overlay */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -153,14 +171,13 @@ const AdminDashboard = () => {
 
       <div className="flex pt-14 md:pt-0">
         {/* Sidebar */}
-    <aside
-  ref={sidebarRef}
-  className={`bg-white shadow-md p-4 space-y-4 md:space-y-6 w-64 z-40 transition-transform duration-300 ease-in-out
-  fixed top-0 left-0 h-full md:sticky md:top-0 md:h-screen ${
-    sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-  }`}
->
-
+        <aside
+          ref={sidebarRef}
+          className={`bg-white shadow-md p-4 space-y-4 md:space-y-6 w-64 z-40 transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 h-full md:sticky md:top-0 md:h-screen ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-blue-600">Admin</h1>
             <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
@@ -214,61 +231,77 @@ const AdminDashboard = () => {
             <>
               {/* Stat cards */}
               <div className="flex flex-col sm:flex-row flex-wrap gap-4">
-                <StatCard title="Total Sales" value={stats.totalSales} />
-                <StatCard title="Total Orders" value={stats.totalOrders} />
-                <StatCard title="Pending Orders" value={stats.pendingOrders} />
+                {loading ? (
+                  <>
+                    <StatSkeleton />
+                    <StatSkeleton />
+                    <StatSkeleton />
+                  </>
+                ) : (
+                  <>
+                    <StatCard title="Total Sales" value={stats.totalSales} />
+                    <StatCard title="Total Orders" value={stats.totalOrders} />
+                    <StatCard title="Pending Orders" value={stats.pendingOrders} />
+                  </>
+                )}
               </div>
 
               {/* Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <ChartCard title="Sales Bar Chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <Bar dataKey="value" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
+                {loading ? (
+                  <>
+                    <ChartSkeleton />
+                    <ChartSkeleton />
+                    <ChartSkeleton />
+                  </>
+                ) : (
+                  <>
+                    <ChartCard title="Sales Bar Chart">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barData}>
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <Bar dataKey="value" fill="#3b82f6" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
 
-                <ChartCard title="Order Pie Chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={60}
-                        fill="#8884d8"
-                        label
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={['#3b82f6', '#f97316'][index]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartCard>
+                    <ChartCard title="Order Pie Chart">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={60}
+                            label
+                          >
+                            {pieData.map((_, index) => (
+                              <Cell key={index} fill={['#3b82f6', '#f97316'][index]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
 
-                <ChartCard title="Sales Over Time">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={lineData}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <Line type="monotone" dataKey="sales" stroke="#10b981" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartCard>
+                    <ChartCard title="Sales Over Time">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={lineData}>
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <Line type="monotone" dataKey="sales" stroke="#10b981" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -282,6 +315,8 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+
+
 
 
 

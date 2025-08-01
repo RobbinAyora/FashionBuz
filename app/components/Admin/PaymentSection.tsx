@@ -1,5 +1,8 @@
 'use client'
+
 import React, { useEffect, useState } from 'react'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 
 interface Payment {
   _id: string
@@ -18,13 +21,21 @@ interface Payment {
 
 const PaymentSection = () => {
   const [payments, setPayments] = useState<Payment[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchPayments = async () => {
-      const res = await fetch('/api/payments')
-      const data = await res.json()
-      setPayments(data)
+      try {
+        const res = await fetch('/api/payments')
+        const data = await res.json()
+        setPayments(data)
+      } catch (err) {
+        console.error('Error fetching payments:', err)
+      } finally {
+        setLoading(false)
+      }
     }
+
     fetchPayments()
   }, [])
 
@@ -34,7 +45,25 @@ const PaymentSection = () => {
         💰 Customer Payments
       </h2>
 
-      {payments.length === 0 ? (
+      {loading ? (
+        <>
+          {/* Skeleton for table view */}
+          <div className="hidden lg:block space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} height={40} />
+            ))}
+          </div>
+
+          {/* Skeleton for mobile card view */}
+          <div className="lg:hidden space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-4 border rounded-xl bg-white shadow">
+                <Skeleton height={20} count={6} />
+              </div>
+            ))}
+          </div>
+        </>
+      ) : payments.length === 0 ? (
         <p className="text-gray-500 text-sm">No payments yet.</p>
       ) : (
         <>
@@ -146,6 +175,7 @@ const PaymentSection = () => {
 }
 
 export default PaymentSection
+
 
 
 

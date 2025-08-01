@@ -2,15 +2,33 @@
 
 import Link from 'next/link'
 import { useCart } from './CartContext'
+import { useEffect, useState } from 'react'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 
 export default function CheckoutPage() {
   const { cartItems, getTotal } = useCart()
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500) // fake loading for 1.5s
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="min-h-screen bg-white px-6 py-10 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-blue-700 mb-6">Checkout</h1>
 
-      {cartItems.length === 0 ? (
+      {loading ? (
+        <div className="space-y-4 bg-blue-50 p-6 rounded-xl shadow-md">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="flex justify-between pb-3">
+              <Skeleton width={120} height={20} />
+              <Skeleton width={60} height={20} />
+            </div>
+          ))}
+        </div>
+      ) : cartItems.length === 0 ? (
         <div className="text-center py-20 text-gray-500 text-lg">
           Your cart is empty.
         </div>
@@ -37,11 +55,13 @@ export default function CheckoutPage() {
         </>
       )}
 
-      <Link href="/payment" className="inline-block mt-10">
-        <button className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-lg font-medium shadow-md">
-          Proceed to Payments
-        </button>
-      </Link>
+      {!loading && (
+        <Link href="/payment" className="inline-block mt-10">
+          <button className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-lg font-medium shadow-md">
+            Proceed to Payments
+          </button>
+        </Link>
+      )}
     </div>
   )
 }
