@@ -1,120 +1,294 @@
 'use client'
-import React, { useState } from 'react'
+
+import { useEffect, useState, useRef } from 'react'
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 import {
   Menu,
-  DollarSign,
-  ShoppingBag,
-  LogOut,
   TrendingUp,
+  ShoppingBag,
+  DollarSign,
+  LogOut,
+  X,
 } from 'lucide-react'
-import ProductSection from './Admin/ProductSection'
 import PaymentSection from './Admin/PaymentSection'
+import ProductSection from './Admin/ProductSection'
+
+interface Payment {
+  amount: number
+  status: string
+}
+
+const StatCard = ({ title, value }: { title: string; value: number }) => (
+  <div className="bg-white rounded-xl shadow p-4 w-full sm:w-1/2 md:w-1/3 flex-1">
+    <h3 className="text-base sm:text-lg font-semibold text-gray-700">{title}</h3>
+    <p className="text-2xl font-bold text-blue-600">{value}</p>
+  </div>
+)
+
+const NavItem = ({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: JSX.Element
+  label: string
+  active?: boolean
+  onClick?: () => void
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center w-full p-2 rounded-lg transition-colors ${
+      active ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+    }`}
+  >
+    <span className="mr-2">{icon}</span>
+    <span className="text-sm md:text-base">{label}</span>
+  </button>
+)
+
+const ChartCard = ({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) => (
+  <div className="bg-white rounded-xl shadow p-4 w-full h-72">
+    <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">{title}</h3>
+    {children}
+  </div>
+)
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'payments'>('dashboard')
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+  })
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const res = await fetch('/api/payments')
+      const data = await res.json()
+      setPayments(data)
+    }
+    fetchPayments()
+  }, [])
+
+  useEffect(() => {
+    const totalSales = payments.reduce((sum, payment) => sum + payment.amount, 0)
+    const totalOrders = payments.length
+    const pendingOrders = payments.filter(p => p.status === 'pending').length
+    setStats({ totalSales, totalOrders, pendingOrders })
+  }, [payments])
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setSidebarOpen(false)
+      }
+    }
+    if (sidebarOpen) {
+      document.addEventListener('mousedown', handleOutsideClick)
+    } else {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [sidebarOpen])
+
+  const pieData = [
+    { name: 'Total', value: stats.totalOrders },
+    { name: 'Pending', value: stats.pendingOrders },
+  ]
+
+  const lineData = [
+    { name: 'Week 1', sales: stats.totalSales / 3 },
+    { name: 'Week 2', sales: stats.totalSales / 2 },
+    { name: 'Week 3', sales: stats.totalSales },
+  ]
+
+  const barData = [
+    { name: 'Sales', value: stats.totalSales },
+    { name: 'Orders', value: stats.totalOrders },
+    { name: 'Pending', value: stats.pendingOrders },
+  ]
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-800">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md hidden md:flex flex-col p-4 space-y-4 sticky top-0 h-screen">
-        <h1 className="text-2xl font-bold text-blue-600 mb-6">Admin</h1>
-        <nav className="space-y-2">
-          <NavItem
-            icon={<TrendingUp size={18} />}
-            label="Dashboard"
-            active={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
-          />
-          <NavItem
-            icon={<ShoppingBag size={18} />}
-            label="Products"
-            active={activeTab === 'products'}
-            onClick={() => setActiveTab('products')}
-          />
-          <NavItem
-            icon={<DollarSign size={18} />}
-            label="Payments"
-            active={activeTab === 'payments'}
-            onClick={() => setActiveTab('payments')}
-          />
-          <NavItem
-            icon={<LogOut size={18} />}
-            label="Logout"
-            onClick={() => alert('Logging out...')}
-          />
-        </nav>
-      </aside>
+    <div className="relative min-h-screen bg-gray-100 text-gray-800">
+      {/* Mobile hamburger top-left */}
+      <div className="md:hidden p-4 bg-white shadow fixed top-0 left-0 z-50">
+        <button onClick={() => setSidebarOpen(true)}>
+          <Menu size={24} />
+        </button>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 overflow-auto">
-        {/* Top Navbar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="md:hidden">
-            <Menu size={24} />
+      {/* Transparent overlay */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-transparent z-30 md:hidden"
+        />
+      )}
+
+      <div className="flex pt-14 md:pt-0">
+        {/* Sidebar */}
+    <aside
+  ref={sidebarRef}
+  className={`bg-white shadow-md p-4 space-y-4 md:space-y-6 w-64 z-40 transition-transform duration-300 ease-in-out
+  fixed top-0 left-0 h-full md:sticky md:top-0 md:h-screen ${
+    sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+  }`}
+>
+
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold text-blue-600">Admin</h1>
+            <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
+              <X size={24} />
+            </button>
           </div>
-          <h2 className="text-xl font-semibold capitalize">{activeTab}</h2>
-          <div className="text-sm">Welcome, Admin</div>
-        </div>
 
-        {/* Render Section Based on Active Tab */}
-        {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Total Sales" value="KES 120,000" icon={<DollarSign size={20} />} />
-            <StatCard title="Orders" value="215" icon={<ShoppingBag size={20} />} />
-            <StatCard title="Pending Orders" value="12" icon={<TrendingUp size={20} />} />
-          </div>
-        )}
+          <nav className="space-y-2">
+            <NavItem
+              icon={<TrendingUp size={18} />}
+              label="Dashboard"
+              active={activeTab === 'dashboard'}
+              onClick={() => {
+                setActiveTab('dashboard')
+                setSidebarOpen(false)
+              }}
+            />
+            <NavItem
+              icon={<ShoppingBag size={18} />}
+              label="Products"
+              active={activeTab === 'products'}
+              onClick={() => {
+                setActiveTab('products')
+                setSidebarOpen(false)
+              }}
+            />
+            <NavItem
+              icon={<DollarSign size={18} />}
+              label="Payments"
+              active={activeTab === 'payments'}
+              onClick={() => {
+                setActiveTab('payments')
+                setSidebarOpen(false)
+              }}
+            />
+            <NavItem
+              icon={<LogOut size={18} />}
+              label="Logout"
+              onClick={() => alert('Logging out...')}
+            />
+          </nav>
+        </aside>
 
-        {activeTab === 'products' && (
-          <ProductSection />
-        )}
+        {/* Main Content */}
+        <main className="flex-1 px-4 pt-6 md:px-6 space-y-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-blue-700 capitalize">
+            {activeTab}
+          </h2>
 
-        {activeTab === 'payments' && (
-          <PaymentSection />
-        )}
-      </main>
+          {activeTab === 'dashboard' && (
+            <>
+              {/* Stat cards */}
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+                <StatCard title="Total Sales" value={stats.totalSales} />
+                <StatCard title="Total Orders" value={stats.totalOrders} />
+                <StatCard title="Pending Orders" value={stats.pendingOrders} />
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <ChartCard title="Sales Bar Chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData}>
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <Bar dataKey="value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Order Pie Chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={60}
+                        fill="#8884d8"
+                        label
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={['#3b82f6', '#f97316'][index]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Sales Over Time">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={lineData}>
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <Line type="monotone" dataKey="sales" stroke="#10b981" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'products' && <ProductSection />}
+          {activeTab === 'payments' && <PaymentSection />}
+        </main>
+      </div>
     </div>
   )
 }
 
-// Reusable Components
-
-interface NavItemProps {
-  icon: React.ReactNode
-  label: string
-  active?: boolean
-  onClick?: () => void
-}
-
-const NavItem = ({ icon, label, active, onClick }: NavItemProps) => (
-  <div
-    onClick={onClick}
-    className={`flex items-center space-x-2 cursor-pointer px-2 py-1 rounded transition-colors 
-    ${active ? 'bg-blue-100 text-blue-600 font-semibold' : 'hover:text-blue-600'}`}
-  >
-    {icon}
-    <span>{label}</span>
-  </div>
-)
-
-const StatCard = ({
-  title,
-  value,
-  icon,
-}: {
-  title: string
-  value: string | number
-  icon: React.ReactNode
-}) => (
-  <div className="bg-white p-4 rounded-xl shadow flex items-center space-x-4">
-    <div className="text-blue-600">{icon}</div>
-    <div>
-      <p className="text-sm text-gray-500">{title}</p>
-      <h3 className="text-lg font-bold">{value}</h3>
-    </div>
-  </div>
-)
-
 export default AdminDashboard
+
+
+
+
+
+
+
+
 
 
