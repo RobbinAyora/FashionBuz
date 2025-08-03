@@ -221,7 +221,7 @@ const ProductSection = () => {
                   />
                 </div>
                 <p className="font-semibold">{product.name}</p>
-                <p className="text-sm text-gray-600">Ksh.{product.price}</p>
+                <p className="text-sm text-gray-600">Ksh{product.price}</p>
                 <p className="text-xs text-gray-400 capitalize">{product.category}</p>
 
                 <div className="flex gap-4 mt-3">

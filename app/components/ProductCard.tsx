@@ -1,6 +1,7 @@
 'use client'
 import Image from 'next/image'
 import { useCart } from './CartContext'
+import toast from 'react-hot-toast'
 
 interface Product {
   name: string
@@ -11,6 +12,16 @@ interface Product {
 
 const ProductCard = ({ name, price, image, sale }: Product) => {
   const { addToCart } = useCart()
+
+  const handleOrder = () => {
+    addToCart({
+      name,
+      price: parseFloat(price.replace(/[^\d.]/g, '')),
+      image,
+      sale,
+    })
+    toast.success('Order placed successfully!')
+  }
 
   return (
     <div className="flex flex-col justify-between p-4 rounded-2xl shadow-md bg-white w-full max-w-xs sm:max-w-sm transition hover:shadow-lg">
@@ -24,7 +35,7 @@ const ProductCard = ({ name, price, image, sale }: Product) => {
         <p className="text-sm text-gray-700">
           {sale ? (
             <>
-              <span className="line-through mr-1 text-gray-400">Ksh.5.00</span>
+              <span className="line-through mr-1 text-gray-400">Ksh 50.00</span>
               <span className="text-red-500 font-medium">{price}</span>
             </>
           ) : (
@@ -35,13 +46,7 @@ const ProductCard = ({ name, price, image, sale }: Product) => {
 
       <div className="mt-4 flex justify-end">
         <button
-          onClick={() =>
-            addToCart({
-              name, price: parseFloat(price.replace(/[^\d.]/g, '')),
-              image,
-              sale,
-            })
-          }
+          onClick={handleOrder}
           className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           Order Now
@@ -52,6 +57,7 @@ const ProductCard = ({ name, price, image, sale }: Product) => {
 }
 
 export default ProductCard
+
 
 
 

@@ -2,7 +2,7 @@ export const featured = [
   { name: 'Cloth-1', price: '100.00', image: '/img-1.jpg' },
   { name: 'Cloth-2', price: '100.00', image: '/img-2.jpg' },
    { name: 'Cloth-3', price: '100.00', image: '/img-5.jpg' },
-    { name: 'Cloth-4', price: 'Ksh100.00', image: '/img-6.jpg' }
+    { name: 'Cloth-4', price: '100.00', image: '/img-6.jpg' }
 ]
 
 export const feop = [

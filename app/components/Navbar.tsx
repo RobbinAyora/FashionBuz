@@ -1,8 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { FiShoppingCart } from 'react-icons/fi'
+import { useCart } from './CartContext'
 
 const Navbar = () => {
+  const { cartItems } = useCart()
+  const hasItems = cartItems.length > 0
+
   return (
     <div className="w-full px-4 py-4 bg-white shadow flex items-center justify-between">
       {/* Brand */}
@@ -12,10 +16,13 @@ const Navbar = () => {
       <div className="flex items-center gap-4 ml-auto">
         {/* Cart Icon */}
         <div className="relative">
-          <Link href='/checkout'><FiShoppingCart size={26} aria-label="Shopping cart" /></Link>
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-            1
-          </span>
+          <Link href="/checkout">
+            <FiShoppingCart size={26} aria-label="Shopping cart" />
+          </Link>
+
+          {hasItems && (
+            <span className="absolute -top-2 -right-2 w-3 h-3 bg-blue-600 rounded-full border-2 border-white" />
+          )}
         </div>
 
         {/* Admin Button */}
@@ -30,6 +37,7 @@ const Navbar = () => {
 }
 
 export default Navbar
+
 
 
 

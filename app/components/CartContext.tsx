@@ -1,4 +1,3 @@
-// context/CartContext.tsx
 'use client'
 
 import React, { createContext, useContext, useState, ReactNode } from 'react'
@@ -12,6 +11,7 @@ type Product = {
 type CartContextType = {
   cartItems: Product[]
   addToCart: (product: Product) => void
+  removeFromCart: (indexToRemove: number) => void
   getTotal: () => number
 }
 
@@ -21,7 +21,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cartItems, setCartItems] = useState<Product[]>([])
 
   const addToCart = (product: Product) => {
-    setCartItems((prev) => [...prev, product]) // 👈 Add as new entry every time
+    setCartItems((prev) => [...prev, product])
+  }
+
+  const removeFromCart = (indexToRemove: number) => {
+    setCartItems((prev) => prev.filter((_, i) => i !== indexToRemove))
   }
 
   const getTotal = () => {
@@ -29,7 +33,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, getTotal }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, getTotal }}>
       {children}
     </CartContext.Provider>
   )
@@ -42,4 +46,5 @@ export const useCart = () => {
   }
   return context
 }
+
 
