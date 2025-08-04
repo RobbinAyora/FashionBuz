@@ -1,28 +1,30 @@
 import { connectDB } from '@/lib/db'
 import Products from '@/models/Products'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-const allowedCategories = ['featured', 'feop', 'upcoming']
-
-export async function GET() {
-  await connectDB()
-  const products = await Products.find().sort({ createdAt: -1 })
-  return NextResponse.json(products)
-}
-
-export async function POST(req: Request) {
+// PUT /api/products/[id]
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   await connectDB()
   const body = await req.json()
 
-  const { name, price, image, sale = false, category } = body
-
-  if (!allowedCategories.includes(category)) {
-    return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
+  try {
+    const updatedProduct = await Products.findByIdAndUpdate(params.id, body, { new: true })
+    return NextResponse.json(updatedProduct)
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
   }
-
-  const product = await Products.create({ name, price, image, sale, category })
-
-  return NextResponse.json(product, { status: 201 })
 }
+
+// DELETE /api/products/[id]
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  await connectDB()
+  try {
+    await Products.findByIdAndDelete(params.id)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
+  }
+}
+
 
 
