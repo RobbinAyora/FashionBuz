@@ -18,7 +18,8 @@ export async function POST(req: Request) {
           product_data: {
             name: item.name,
           },
-          unit_amount: item.price  , // Stripe expects amount in cents
+         unit_amount: Math.round(Number(item.price) * 100) // for KES
+  , // Stripe expects amount in cents
         },
         quantity: item.quantity ?? 1, // ✅ Make sure quantity is passed
       })),

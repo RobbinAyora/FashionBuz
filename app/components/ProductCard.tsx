@@ -16,7 +16,8 @@ const ProductCard = ({ name, price, image, sale }: Product) => {
   const handleOrder = () => {
     addToCart({
       name,
-      price: parseFloat(price.replace(/[^\d.]/g, '')),
+      price: Math.round(Number(price.replace(/[^\d]/g, '')))
+,
       image,
       sale,
     })
