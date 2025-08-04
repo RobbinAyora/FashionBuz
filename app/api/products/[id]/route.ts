@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/Mongodb'
 import Product from '@/models/Products'
 
+// PUT Handler
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   await connectDB()
   const body = await req.json()
@@ -14,8 +15,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const { params } = context // ✅ Destructure inside the function
+// DELETE Handler (Fix: Use NextRequest)
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  await connectDB() // 🔄 Optionally add DB connection here too
   const { id } = params
 
   try {
@@ -25,4 +27,5 @@ export async function DELETE(req: Request, context: { params: { id: string } }) 
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
 }
+
 
