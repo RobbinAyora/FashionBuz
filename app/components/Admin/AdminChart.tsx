@@ -15,7 +15,7 @@ interface AdminChartsProps {
   pendingOrders: number
 }
 
-const AdminCharts = ({ totalSales, totalOrders, pendingOrders }: AdminChartsProps) => {
+const AdminChart = ({ totalSales, totalOrders, pendingOrders }: AdminChartsProps) => {
   const [loading, setLoading] = useState(true)
 
   const barData = [
@@ -116,6 +116,6 @@ const AdminCharts = ({ totalSales, totalOrders, pendingOrders }: AdminChartsProp
   )
 }
 
-export default AdminCharts
+export default AdminChart
 
 
