@@ -25,7 +25,8 @@
     "react-is": "^19.1.1",
     "react-loading-skeleton": "^3.5.0",
     "recharts": "^3.1.0",
-    "stripe": "^18.3.0"
+    "stripe": "^18.3.0",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

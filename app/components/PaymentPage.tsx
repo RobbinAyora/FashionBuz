@@ -3,16 +3,12 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useCart } from './CartContext'
-import { loadStripe } from '@stripe/stripe-js'
 import toast from 'react-hot-toast'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
 export default function PaymentPage() {
   const { getTotal, cartItems } = useCart()
-  const [method, setMethod] = useState<'mpesa' | 'card'>('mpesa')
   const [loading, setLoading] = useState(false)
 
   const [name, setName] = useState('')
@@ -33,86 +29,62 @@ export default function PaymentPage() {
 
     setLoading(true)
 
-    if (method === 'mpesa') {
-      try {
-        const res = await fetch('/api/stk-push', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name,
-            email,
-            phoneNumber,
-            address,
-            amount: getTotal(),
-          }),
-        })
-
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to initiate payment.')
-
-        toast.success('✅ STK Push sent. Check your phone...')
-        const checkoutRequestID = data.data.CheckoutRequestID
-
-        let attempts = 0
-        const pollQuery = async () => {
-          const pollRes = await fetch('/api/stk-query', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ checkoutRequestID }),
-          })
-
-          const pollData = await pollRes.json()
-
-          if (!pollData.success) {
-            toast.error('❌ Error querying payment. Try again.')
-            setLoading(false)
-            return
-          }
-
-          const resultCode = pollData.data.ResultCode
-
-          if (resultCode === '0') {
-            toast.success('✅ Payment confirmed!')
-            setLoading(false)
-          } else if (resultCode === '1' || resultCode === '1032') {
-            toast.error('❌ Payment cancelled or timed out.')
-            setLoading(false)
-          } else if (attempts < 5) {
-            attempts++
-            setTimeout(pollQuery, 5000)
-          } else {
-            toast.error('⚠ Payment not confirmed. Try again later.')
-            setLoading(false)
-          }
-        }
-
-        pollQuery()
-      } catch (err) {
-        console.error(err)
-        toast.error('❌ M-PESA payment failed.')
-        setLoading(false)
-      }
-
-      return
-    }
-
-    // Stripe Checkout
     try {
-      const res = await fetch('/api/checkout', {
+      const res = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: cartItems }),
+        body: JSON.stringify({
+          name,
+          email,
+          phoneNumber,
+          address,
+          amount: getTotal(),
+        }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Stripe session failed.')
+      if (!res.ok) throw new Error(data.error || 'Failed to initiate payment.')
 
-      const stripe = await stripePromise
-      await stripe?.redirectToCheckout({ sessionId: data.id })
+      toast.success('✅ STK Push sent. Check your phone...')
+      const checkoutRequestID = data.data.CheckoutRequestID
+
+      let attempts = 0
+      const pollQuery = async () => {
+        const pollRes = await fetch('/api/stk-query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ checkoutRequestID }),
+        })
+
+        const pollData = await pollRes.json()
+
+        if (!pollData.success) {
+          toast.error('❌ Error querying payment. Try again.')
+          setLoading(false)
+          return
+        }
+
+        const resultCode = pollData.data.ResultCode
+
+        if (resultCode === '0') {
+          toast.success('✅ Payment confirmed!')
+          setLoading(false)
+        } else if (resultCode === '1' || resultCode === '1032') {
+          toast.error('❌ Payment cancelled or timed out.')
+          setLoading(false)
+        } else if (attempts < 5) {
+          attempts++
+          setTimeout(pollQuery, 5000)
+        } else {
+          toast.error('⚠ Payment not confirmed. Try again later.')
+          setLoading(false)
+        }
+      }
+
+      pollQuery()
     } catch (err) {
       console.error(err)
-      toast.error('Something went wrong during payment.')
-    } finally {
+      toast.error('❌ M-PESA payment failed.')
       setLoading(false)
     }
   }
@@ -170,32 +142,9 @@ export default function PaymentPage() {
           <div className="bg-blue-50 p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-semibold text-blue-600 mb-4">Payment Method</h2>
             {loading ? (
-              <Skeleton count={2} height={30} className="mb-3" />
+              <Skeleton count={1} height={30} className="mb-3" />
             ) : (
-              <div className="space-y-3">
-                <label className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="method"
-                    value="mpesa"
-                    checked={method === 'mpesa'}
-                    onChange={() => setMethod('mpesa')}
-                    className="accent-blue-600"
-                  />
-                  <span>Pay with M-PESA</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="method"
-                    value="card"
-                    checked={method === 'card'}
-                    onChange={() => setMethod('card')}
-                    className="accent-blue-600"
-                  />
-                  <span>Credit/Debit Card (Stripe)</span>
-                </label>
-              </div>
+              <div className="text-blue-800 font-medium">M-PESA STK Push</div>
             )}
           </div>
 
@@ -214,7 +163,7 @@ export default function PaymentPage() {
               loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
             } text-white py-3 rounded-lg font-semibold transition`}
           >
-            {loading ? 'Processing...' : 'Confirm Payment'}
+            {loading ? 'Processing...' : 'Confirm M-PESA Payment'}
           </button>
 
           <Link href="/checkout">
@@ -227,6 +176,7 @@ export default function PaymentPage() {
     </div>
   )
 }
+
 
 
 

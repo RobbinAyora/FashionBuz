@@ -1,251 +1,177 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
-import toast from 'react-hot-toast'
-import Skeleton from 'react-loading-skeleton'
-import 'react-loading-skeleton/dist/skeleton.css'
-import { Product } from '@/app/types/Product'
+import { toast } from 'react-hot-toast'
+
+interface Product {
+  _id?: string
+  name: string
+  price: number
+  image: string
+  sale?: boolean
+  category?: string
+}
 
 const ProductSection = () => {
-  const [products, setProducts] = useState<Product[]>([])
-  const [form, setForm] = useState<Omit<Product, '_id'>>({
+  const [form, setForm] = useState<Product>({
     name: '',
     price: 0,
     image: '',
     sale: false,
     category: 'featured',
   })
+  const [products, setProducts] = useState<Product[]>([])
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+
+  const fetchProducts = async () => {
+    const res = await fetch('/api/products')
+    const data = await res.json()
+    setProducts(data)
+  }
 
   useEffect(() => {
     fetchProducts()
   }, [])
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true)
-      const res = await fetch('/api/products')
-      const data = await res.json()
-      setProducts(data)
-    } catch (err) {
-      toast.error('Failed to fetch products')
-    } finally {
-      setLoading(false)
-    }
+  // Convert image to base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
+    })
   }
 
-  const handleImageUpload = (file: File) => {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const base64 = await convertToBase64(file)
+      setForm({ ...form, image: base64 })
+      setPreview(URL.createObjectURL(file))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    try {
-      let imageData = form.image
-      if (imageFile) imageData = await handleImageUpload(imageFile)
-
-      const payload = { ...form, image: imageData }
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/products/${editingId}` : '/api/products'
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (res.ok) {
-        toast.success(editingId ? 'Product updated!' : 'Product added!')
-        setForm({ name: '', price: 0, image: '', sale: false, category: 'featured' })
-        setImageFile(null)
-        setEditingId(null)
-        fetchProducts()
-      } else {
-        toast.error('Failed to save product')
-      }
-    } catch (err) {
-      toast.error('Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this product?')) return
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
 
     if (res.ok) {
-      toast.success('Product deleted')
+      toast.success('Product added successfully')
+      setForm({
+        name: '',
+        price: 0,
+        image: '',
+        sale: false,
+        category: 'featured',
+      })
+      setImageFile(null)
+      setPreview(null)
       fetchProducts()
     } else {
-      toast.error('Failed to delete')
+      toast.error('Something went wrong')
     }
-  }
-
-  const handleEdit = (product: Product) => {
-    setForm({
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      sale: product.sale ?? false,
-      category: product.category || 'featured',
-    })
-    setImageFile(null)
-    setEditingId(product._id || null)
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h2 className="text-2xl font-bold mb-4">Admin Product Section</h2>
+    <div className="w-full p-6">
+      <h2 className="text-2xl font-bold mb-4">Add Product</h2>
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
+        <div>
+          <label className="block text-sm font-medium">Product Name</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            required
+          />
+        </div>
 
-      {/* Add/Edit Product Form */}
-      <form onSubmit={handleSubmit} className="bg-white shadow p-4 rounded mb-6 grid grid-cols-1 gap-4">
-        <input
-          type="text"
-          placeholder="Product Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="border p-2 rounded"
-          required
-        />
+        <div>
+          <label className="block text-sm font-medium">Price</label>
+          <input
+            type="number"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            required
+          />
+        </div>
 
-        <input
-          type="number"
-          placeholder="Price"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-          className="border p-2 rounded"
-          required
-        />
+        <div>
+          <label className="block text-sm font-medium">Upload Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="mt-1 block w-full"
+            required
+          />
+          {preview && (
+            <img src={preview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded" />
+          )}
+        </div>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) setImageFile(file)
-          }}
-          className="border p-2 rounded"
-        />
+        <div>
+          <label className="block text-sm font-medium">Category</label>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="featured">Featured</option>
+            <option value="new">New</option>
+            <option value="popular">Popular</option>
+          </select>
+        </div>
 
-        {(imageFile || form.image) && (
-          <div className="w-32 h-32 relative">
-            <Image
-              src={imageFile ? URL.createObjectURL(imageFile) : form.image}
-              alt="preview"
-              fill
-              className="object-cover rounded"
-            />
-          </div>
-        )}
-
-        <select
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'] })}
-          className="border p-2 rounded"
-        >
-          <option value="featured">Featured</option>
-          <option value="feop">Feop</option>
-          <option value="upcoming">Upcoming</option>
-        </select>
-
-        <label className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={form.sale}
             onChange={(e) => setForm({ ...form, sale: e.target.checked })}
           />
-          On Sale?
-        </label>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-          >
-            {loading ? (editingId ? 'Updating...' : 'Adding...') : editingId ? 'Update Product' : 'Add Product'}
-          </button>
-
-          {editingId && (
-            <button
-              type="button"
-              onClick={() => {
-                setForm({ name: '', price: 0, image: '', sale: false, category: 'featured' })
-                setImageFile(null)
-                setEditingId(null)
-              }}
-              className="bg-gray-300 text-black py-2 px-4 rounded hover:bg-gray-400"
-            >
-              Cancel Edit
-            </button>
-          )}
+          <label>On Sale</label>
         </div>
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Add Product
+        </button>
       </form>
 
-      {/* Product List */}
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {loading && products.length === 0
-          ? Array(6)
-              .fill(0)
-              .map((_, idx) => (
-                <div key={idx} className="p-4 bg-white rounded shadow">
-                  <Skeleton height={200} />
-                  <Skeleton height={20} style={{ marginTop: '10px' }} />
-                  <Skeleton height={15} width={80} />
-                  <Skeleton height={15} width={60} />
-                  <Skeleton height={20} width={100} />
-                </div>
-              ))
-          : products.map((product) => (
-              <div
-                key={product._id}
-                className="bg-white p-3 rounded shadow flex flex-col items-center"
-              >
-                <div className="w-full aspect-[3/4] relative mb-2 rounded overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover rounded"
-                  />
-                </div>
-                <p className="font-semibold">{product.name}</p>
-                <p className="text-sm text-gray-600">Ksh{product.price}</p>
-                <p className="text-xs text-gray-400 capitalize">{product.category}</p>
-
-                <div className="flex gap-4 mt-3">
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="text-sm text-green-600 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product._id!)}
-                    className="text-sm text-red-500 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+      <h2 className="text-2xl font-bold mt-8 mb-4">Product List</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <div
+            key={product._id}
+            className="border p-4 rounded shadow bg-white flex flex-col items-center"
+          >
+            <img src={product.image} alt={product.name} className="w-32 h-32 object-cover mb-2" />
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-gray-600">${product.price}</p>
+            {product.sale && <p className="text-red-500 text-sm">On Sale</p>}
+            <p className="text-sm text-gray-400 mt-1 capitalize">{product.category}</p>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
 export default ProductSection
+
+
 
 
 
