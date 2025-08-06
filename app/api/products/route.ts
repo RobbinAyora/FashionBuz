@@ -1,6 +1,3 @@
-
-
-// POST a new product
 // app/api/products/route.ts
 import { connectDB } from '@/lib/db'
 import Products from '@/models/Products'
