@@ -175,8 +175,3 @@ const PaymentSection = () => {
 }
 
 export default PaymentSection
-
-
-
-
-

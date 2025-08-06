@@ -117,5 +117,3 @@ const AdminChart = ({ totalSales, totalOrders, pendingOrders }: AdminChartsProps
 }
 
 export default AdminChart
-
-

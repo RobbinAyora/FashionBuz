@@ -64,7 +64,7 @@ export default function HomePage() {
 
       {/* Feop Products */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4 text-green-600">Feop Products</h2>
+        <h2 className="text-xl font-bold mb-4 text-green-600">New Products</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
           {loading
             ? renderSkeletonCards(4)
@@ -82,7 +82,7 @@ export default function HomePage() {
 
       {/* Upcoming Products */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4 text-purple-600">Upcoming Products</h2>
+        <h2 className="text-xl font-bold mb-4 text-purple-600">Popular Products</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
           {loading
             ? renderSkeletonCards(4)

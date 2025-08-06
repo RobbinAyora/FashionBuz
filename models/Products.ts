@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema(
     sale: { type: Boolean, default: false },
     category: {
       type: String,
-      enum: ['featured', 'feop', 'upcoming'],
+      enum: ['Featured', 'New', 'Popular'],
       default: 'featured',
     },
   },

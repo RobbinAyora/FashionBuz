@@ -23,8 +23,9 @@ import {
   LogOut,
   X,
 } from 'lucide-react'
-import PaymentSection from './Admin/PaymentSection'
-import ProductSection from './Admin/ProductSection'
+
+import PaymentSection from "../components/PaymentSection";
+import ProductSection from "../components/ProductSection";
 
 interface Payment {
   amount: number
