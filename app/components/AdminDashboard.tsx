@@ -24,8 +24,8 @@ import {
   X,
 } from 'lucide-react'
 
-import PaymentSection from "../components/PaymentSection";
-import ProductSection from "../components/ProductSection";
+import PaymentSection from '../components/PaymentSection'
+import ProductSection from '../components/ProductSection'
 
 interface Payment {
   amount: number
@@ -51,28 +51,6 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
     <h3 className="text-base sm:text-lg font-semibold text-gray-700">{title}</h3>
     <p className="text-2xl font-bold text-blue-600">{value}</p>
   </div>
-)
-
-const NavItem = ({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: JSX.Element
-  label: string
-  active?: boolean
-  onClick?: () => void
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center w-full p-2 rounded-lg transition-colors ${
-      active ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
-    }`}
-  >
-    <span className="mr-2">{icon}</span>
-    <span className="text-sm md:text-base">{label}</span>
-  </button>
 )
 
 const ChartCard = ({
@@ -187,38 +165,52 @@ const AdminDashboard = () => {
           </div>
 
           <nav className="space-y-2">
-            <NavItem
-              icon={<TrendingUp size={18} />}
-              label="Dashboard"
-              active={activeTab === 'dashboard'}
+            <button
               onClick={() => {
                 setActiveTab('dashboard')
                 setSidebarOpen(false)
               }}
-            />
-            <NavItem
-              icon={<ShoppingBag size={18} />}
-              label="Products"
-              active={activeTab === 'products'}
+              className={`flex items-center w-full p-2 rounded-lg transition-colors ${
+                activeTab === 'dashboard' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+              }`}
+            >
+              <TrendingUp size={18} className="mr-2" />
+              Dashboard
+            </button>
+
+            <button
               onClick={() => {
                 setActiveTab('products')
                 setSidebarOpen(false)
               }}
-            />
-            <NavItem
-              icon={<DollarSign size={18} />}
-              label="Payments"
-              active={activeTab === 'payments'}
+              className={`flex items-center w-full p-2 rounded-lg transition-colors ${
+                activeTab === 'products' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+              }`}
+            >
+              <ShoppingBag size={18} className="mr-2" />
+              Products
+            </button>
+
+            <button
               onClick={() => {
                 setActiveTab('payments')
                 setSidebarOpen(false)
               }}
-            />
-            <NavItem
-              icon={<LogOut size={18} />}
-              label="Logout"
+              className={`flex items-center w-full p-2 rounded-lg transition-colors ${
+                activeTab === 'payments' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+              }`}
+            >
+              <DollarSign size={18} className="mr-2" />
+              Payments
+            </button>
+
+            <button
               onClick={() => alert('Logging out...')}
-            />
+              className="flex items-center w-full p-2 rounded-lg transition-colors hover:bg-red-100 text-red-600"
+            >
+              <LogOut size={18} className="mr-2" />
+              Logout
+            </button>
           </nav>
         </aside>
 
@@ -230,7 +222,6 @@ const AdminDashboard = () => {
 
           {activeTab === 'dashboard' && (
             <>
-              {/* Stat cards */}
               <div className="flex flex-col sm:flex-row flex-wrap gap-4">
                 {loading ? (
                   <>
@@ -247,7 +238,6 @@ const AdminDashboard = () => {
                 )}
               </div>
 
-              {/* Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {loading ? (
                   <>
@@ -316,6 +306,7 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+
 
 
 
