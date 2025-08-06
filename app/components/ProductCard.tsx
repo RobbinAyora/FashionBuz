@@ -1,28 +1,27 @@
 'use client'
+
 import Image from 'next/image'
 import { useCart } from './CartContext'
 import toast from 'react-hot-toast'
 
-interface Product {
+interface ProductCardProps {
   name: string
   price: string
   image: string
   sale?: boolean
 }
 
-const ProductCard = ({ name, price, image, sale }: Product) => {
+const ProductCard = ({ name, price, image, sale }: ProductCardProps) => {
   const { addToCart } = useCart()
+const handleOrder = () => {
+  addToCart({
+    id: Date.now(), // generate a unique ID
+    name,
+    price: Math.round(Number(String(price).replace(/[^\d]/g, '')))
+  })
+  toast.success('Order placed successfully!')
+}
 
-  const handleOrder = () => {
-    addToCart({
-      name,
-      price: Math.round(Number(price.replace(/[^\d]/g, '')))
-,
-      image,
-      sale,
-    })
-    toast.success('Order placed successfully!')
-  }
 
   return (
     <div className="flex flex-col justify-between p-4 rounded-2xl shadow-md bg-white w-full max-w-xs sm:max-w-sm transition hover:shadow-lg">
@@ -58,6 +57,8 @@ const ProductCard = ({ name, price, image, sale }: Product) => {
 }
 
 export default ProductCard
+
+
 
 
 
