@@ -16,18 +16,18 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await connectDB()
-    const body = await req.json()
-    const newProduct = new Products(body)
-    await newProduct.save()
-    return NextResponse.json(newProduct, { status: 201 })
+    await connectDB();
+    const body = await req.json();
+    console.log('POST /api/products body:', body); // <-- Check category here too
+
+    if (!body.name || !body.price || !body.image) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const newProduct = await Products.create(body);
+    return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
-    console.error('POST /api/products error:', error)
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
+    console.error('POST /api/products error:', error);
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
-
-
-
-
-

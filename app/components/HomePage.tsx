@@ -28,8 +28,8 @@ export default function HomePage() {
   }, [])
 
   const featured = products.filter((p) => p.category === 'featured')
-  const feop = products.filter((p) => p.category === 'feop')
-  const upcoming = products.filter((p) => p.category === 'upcoming')
+  const feop = products.filter((p) => p.category === 'new')
+  const upcoming = products.filter((p) => p.category === 'popular')
 
   const renderSkeletonCards = (count: number) =>
     Array.from({ length: count }, (_, i) => (
