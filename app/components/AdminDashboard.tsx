@@ -26,6 +26,8 @@ import {
 
 import PaymentSection from '../components/PaymentSection'
 import ProductSection from '../components/ProductSection'
+import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 interface Payment {
   amount: number
@@ -204,13 +206,14 @@ const AdminDashboard = () => {
               Payments
             </button>
 
-            <button
-              onClick={() => alert('Logging out...')}
+            <Link href='/'><button
+              onClick={() => toast.error('Logging out...')}
               className="flex items-center w-full p-2 rounded-lg transition-colors hover:bg-red-100 text-red-600"
             >
               <LogOut size={18} className="mr-2" />
-              Logout
+              Home
             </button>
+            </Link>
           </nav>
         </aside>
 
