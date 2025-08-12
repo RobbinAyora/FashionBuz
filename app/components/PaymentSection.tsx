@@ -27,8 +27,16 @@ const PaymentSection = () => {
     const fetchPayments = async () => {
       try {
         const res = await fetch('/api/payments')
-        const data = await res.json()
-        setPayments(data)
+        const data: Payment[] = await res.json()
+
+        // Filter for only successful and cancelled payments
+        const filtered = data.filter(
+          (p) =>
+            p.status?.toLowerCase() === 'success' ||
+            p.status?.toLowerCase() === 'cancelled'
+        )
+
+        setPayments(filtered)
       } catch (err) {
         console.error('Error fetching payments:', err)
       } finally {
@@ -93,8 +101,8 @@ const PaymentSection = () => {
                       className={`p-3 border font-medium ${
                         p.status === 'success'
                           ? 'text-green-600'
-                          : p.status === 'failed'
-                          ? 'text-red-500'
+                          : p.status === 'cancelled'
+                          ? 'text-orange-500'
                           : 'text-yellow-500'
                       }`}
                     >
@@ -141,8 +149,8 @@ const PaymentSection = () => {
                     className={`font-semibold ${
                       p.status === 'success'
                         ? 'text-green-600'
-                        : p.status === 'failed'
-                        ? 'text-red-500'
+                        : p.status === 'cancelled'
+                        ? 'text-orange-500'
                         : 'text-yellow-500'
                     }`}
                   >
